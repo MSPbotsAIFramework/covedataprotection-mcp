@@ -50,7 +50,9 @@ def register(mcp: FastMCP, client_factory: Callable[[], CoveClient | None]) -> N
             Field(description="Optional paging window (e.g. offset/count) over the result set."),
         ] = None,
     ) -> str:
-        """List the direct child partners of a given partner, with field selection and filtering."""
+        """List the direct child partners of a given partner (one level only —
+        not the full subtree), with field selection and filtering.
+        """
         client = client_factory()
         if client is None:
             return NO_TOKEN
@@ -97,7 +99,9 @@ def register(mcp: FastMCP, client_factory: Callable[[], CoveClient | None]) -> N
     async def covedataprotection_get_partner_info(
         name: Annotated[str, Field(description="Partner name to look up.")],
     ) -> str:
-        """Get partner details by partner name."""
+        """Get partner details by partner name. Requires an exact name match —
+        a nickname or partial name will not resolve.
+        """
         client = client_factory()
         if client is None:
             return NO_TOKEN
@@ -130,11 +134,26 @@ def register(mcp: FastMCP, client_factory: Callable[[], CoveClient | None]) -> N
             dict,
             Field(description=f"Which partner fields to include for each node ({_SCHEMA_HINT})."),
         ],
-        filter: Annotated[str, Field(description="Filter expression to narrow which descendants are included.")],
+        filter: Annotated[
+            str,
+            Field(
+                description=(
+                    "String filter EXPRESSION to narrow which descendants are "
+                    "included (not a dict — see partner_filter below for the "
+                    "dict-shaped one)."
+                )
+            ),
+        ],
         children_limit: Annotated[int, Field(description="Maximum number of children to return per node.")],
         partner_filter: Annotated[
             dict,
-            Field(description=f"Filter criteria applied to partner nodes in the tree ({_SCHEMA_HINT})."),
+            Field(
+                description=(
+                    f"Dict-shaped filter criteria applied to partner nodes in "
+                    f"the tree — distinct from the `filter` string expression "
+                    f"above ({_SCHEMA_HINT})."
+                )
+            ),
         ],
     ) -> str:
         """Get the hierarchical tree of a partner and its descendant partners."""
@@ -181,7 +200,14 @@ def register(mcp: FastMCP, client_factory: Callable[[], CoveClient | None]) -> N
             ),
         ],
     ) -> str:
-        """Update a partner's properties. Overwrites existing values; not reversible via this API."""
+        """Update a partner's properties. Overwrites existing values; not
+        reversible via this API. This replaces the entire object — call
+        covedataprotection_get_partner_info_by_id first and merge your
+        changes into the full record before calling, or unmentioned
+        fields may be silently cleared. Default
+        force_remove_custom_column_values_in_old_scope to false unless
+        the user explicitly confirms dropping those values.
+        """
         client = client_factory()
         if client is None:
             return NO_TOKEN
@@ -199,7 +225,15 @@ def register(mcp: FastMCP, client_factory: Callable[[], CoveClient | None]) -> N
     async def covedataprotection_remove_partner(
         partner_id: Annotated[int, Field(description="ID of the partner to permanently delete.")],
     ) -> str:
-        """Permanently delete a partner by ID. Irreversible; only call with an explicit, confirmed partner ID."""
+        """Permanently delete a partner by ID. Irreversible; only call with an
+        explicit, confirmed partner ID — never one inferred from a name
+        match without the user confirming the resolved ID first. CAUTION:
+        partners can have child partners and backup accounts nested
+        beneath them (see covedataprotection_enumerate_child_partners);
+        this API's cascading behavior on those descendants is not
+        independently confirmed, so check for children first and treat
+        this as high-blast-radius until proven otherwise.
+        """
         client = client_factory()
         if client is None:
             return NO_TOKEN

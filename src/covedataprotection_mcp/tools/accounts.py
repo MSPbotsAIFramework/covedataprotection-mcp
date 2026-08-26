@@ -92,7 +92,14 @@ def register(mcp: FastMCP, client_factory: Callable[[], CoveClient | None]) -> N
         name: Annotated[str, Field(description="Backup account's device login name.")],
         password: Annotated[str, Field(description="Backup account's device login password.")],
     ) -> str:
-        """Look up a backup account by its own device login name and password."""
+        """Look up a backup account by its own device login name and password.
+
+        Only use this if the user has already explicitly supplied the
+        device password themselves — never ask for or fabricate one.
+        Prefer covedataprotection_get_account_info_by_id, which needs no
+        password, whenever an account ID is available or resolvable via
+        covedataprotection_enumerate_accounts.
+        """
         client = client_factory()
         if client is None:
             return NO_TOKEN
@@ -133,7 +140,12 @@ def register(mcp: FastMCP, client_factory: Callable[[], CoveClient | None]) -> N
             ),
         ],
     ) -> str:
-        """Update a backup account's properties. Overwrites existing values; not reversible via this API."""
+        """Update a backup account's properties. Overwrites existing values; not
+        reversible via this API. This replaces the entire object — call
+        covedataprotection_get_account_info_by_id first and merge your
+        changes into the full record before calling, or unmentioned
+        fields may be silently cleared.
+        """
         client = client_factory()
         if client is None:
             return NO_TOKEN
@@ -151,7 +163,11 @@ def register(mcp: FastMCP, client_factory: Callable[[], CoveClient | None]) -> N
     async def covedataprotection_remove_account(
         account_id: Annotated[int, Field(description="ID of the backup account to permanently delete.")],
     ) -> str:
-        """Permanently delete a backup account by ID. Irreversible; requires an explicit account ID."""
+        """Permanently delete a backup account by ID. Irreversible; only call
+        with an explicit, confirmed account ID — never one inferred from a
+        name/company match without the user confirming the resolved ID
+        first.
+        """
         client = client_factory()
         if client is None:
             return NO_TOKEN
@@ -170,7 +186,13 @@ def register(mcp: FastMCP, client_factory: Callable[[], CoveClient | None]) -> N
             Field(description=f"Feature flags to set, per Cove's features struct ({_SCHEMA_HINT})."),
         ],
     ) -> str:
-        """Enable or disable specific product features on a backup account."""
+        """Enable or disable specific product features on a backup account.
+
+        Overwrites the account's entire feature set; not reversible via
+        this API. Call covedataprotection_get_account_features first and
+        merge your changes into the full set before calling, or
+        unmentioned features may be silently disabled.
+        """
         client = client_factory()
         if client is None:
             return NO_TOKEN

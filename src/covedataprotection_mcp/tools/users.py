@@ -64,7 +64,14 @@ def register(mcp: FastMCP, client_factory: Callable[[], CoveClient | None]) -> N
         name_or_email: Annotated[str, Field(description="The user's login name or email address.")],
         password: Annotated[str, Field(description="The user's login password.")],
     ) -> str:
-        """Look up a portal user by partner, name/email, and password."""
+        """Look up a portal user by partner, name/email, and password.
+
+        Only use this if the user has already explicitly supplied the
+        login password themselves — never ask for or fabricate one.
+        Prefer covedataprotection_get_user_info_by_id, which needs no
+        password, whenever a user ID is available or resolvable via
+        covedataprotection_enumerate_users.
+        """
         client = client_factory()
         if client is None:
             return NO_TOKEN
@@ -99,7 +106,13 @@ def register(mcp: FastMCP, client_factory: Callable[[], CoveClient | None]) -> N
             ),
         ],
     ) -> str:
-        """Update a portal user's properties. Overwrites existing values; not reversible via this API."""
+        """Update a portal user's properties. Overwrites existing values; not
+        reversible via this API. This replaces the entire object,
+        including role/permissions — call
+        covedataprotection_get_user_info_by_id first and merge your
+        changes into the full record before calling, or unmentioned
+        fields (including access level) may be silently reset.
+        """
         client = client_factory()
         if client is None:
             return NO_TOKEN
@@ -114,7 +127,13 @@ def register(mcp: FastMCP, client_factory: Callable[[], CoveClient | None]) -> N
     async def covedataprotection_remove_user(
         user_id: Annotated[int, Field(description="ID of the portal user to permanently delete.")],
     ) -> str:
-        """Permanently delete a portal user by ID. Irreversible; only call with an explicit, confirmed user ID."""
+        """Permanently delete a portal user by ID. Irreversible; only call
+        with an explicit, confirmed user ID — never one inferred from a
+        name match without the user confirming the resolved ID first.
+        There is no suspend/disable option in this API — if the user
+        asked to "deactivate" or "disable" someone, confirm they actually
+        want permanent deletion before calling this.
+        """
         client = client_factory()
         if client is None:
             return NO_TOKEN
