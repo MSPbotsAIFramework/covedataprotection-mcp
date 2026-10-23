@@ -126,13 +126,13 @@ persistence" requirement. Instead, `api_client.CoveClient.call()` performs a
 fresh Login on *every* tool invocation and discards the resulting visa
 afterward, trading one extra HTTP round trip per call for full statelessness.
 
-### HEADER 授权参数说明
+### HEADER authentication parameters
 
-| Header | 类型 | 是否必填 | 默认值 | 枚举值 | 字段描述 | Example |
+| Header | Type | Required | Default | Allowed values | Description | Example |
 |---|---|---|---|---|---|---|
-| `X-CoveDataProtection-Partner` | string | 是 | 无 | 无 | Login 的 `partner` 字段（登录所属的租户/合作伙伴名） | `Acme MSP (admin@example.com)` |
-| `X-CoveDataProtection-Username` | string | 是 | 无 | 无 | Login 的 `username` 字段 | `mspbots` |
-| `X-CoveDataProtection-Password` | string | 是 | 无 | 无 | Login 的 `password` 字段 | `••••••••` |
+| `X-CoveDataProtection-Partner` | string | Yes | None | None | The `partner` field of Login (the tenant/partner name the login belongs to) | `Acme MSP (admin@example.com)` |
+| `X-CoveDataProtection-Username` | string | Yes | None | None | The `username` field of Login | `mspbots` |
+| `X-CoveDataProtection-Password` | string | Yes | None | None | The `password` field of Login | `••••••••` |
 
 Missing any of the three headers returns `401`:
 ```json
@@ -146,11 +146,11 @@ Missing any of the three headers returns `401`:
 
 ## Environment Variables
 
-| Variable | 类型 | 是否必填 | 默认值 | 说明 |
+| Variable | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `MCP_HTTP_PORT` | int | 否 | `8080` | HTTP 监听端口 |
-| `MCP_HTTP_HOST` | string | 否 | `0.0.0.0` | HTTP 监听地址 |
-| `COVEDATAPROTECTION_BASE_URL` | string | 否 | `https://api.backup.management/jsonapi` | Cove Management Service JSON-RPC 端点 |
+| `MCP_HTTP_PORT` | int | No | `8080` | HTTP listen port |
+| `MCP_HTTP_HOST` | string | No | `0.0.0.0` | HTTP listen address |
+| `COVEDATAPROTECTION_BASE_URL` | string | No | `https://api.backup.management/jsonapi` | Cove Management Service JSON-RPC endpoint |
 
 ## MCP Endpoint
 
@@ -196,7 +196,7 @@ practice.
 | users | `covedataprotection_modify_user` | ModifyUser | user_info(required) |
 | users | `covedataprotection_remove_user` | RemoveUser | user_id(required) |
 
-## 测试示例
+## Test Example
 
 ```bash
 # Health check
