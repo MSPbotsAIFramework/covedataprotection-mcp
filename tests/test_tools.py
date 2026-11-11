@@ -118,3 +118,23 @@ def test_error_envelope_mapping(status_code, expected_code, expected_retryable):
     assert envelope["error"]["code"] == expected_code
     assert envelope["error"]["retryable"] is expected_retryable
     assert envelope["error"]["message"] == "boom"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "raised_status,expected_code",
+    [(400, "unauthorized"), (0, "upstream_error"), (503, "upstream_error"), (429, "rate_limited")],
+)
+async def test_login_rejection_is_unauthorized(monkeypatch, raised_status, expected_code):
+    import json
+
+    from covedataprotection_mcp.api_client import CoveClient
+
+    async def fake_post(self, body):
+        raise CoveError(raised_status, "Login failed")
+
+    monkeypatch.setattr(CoveClient, "_post", fake_post)
+    client = CoveClient("p", "u", "bad", "https://example.invalid")
+    with pytest.raises(CoveError) as exc:
+        await client.call("EnumerateAccounts")
+    assert json.loads(exc.value.to_envelope())["error"]["code"] == expected_code

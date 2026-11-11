@@ -98,7 +98,15 @@ class CoveClient:
                 "password": self._password,
             },
         }
-        data = await self._post(body)
+        try:
+            data = await self._post(body)
+        except CoveError as e:
+            # Cove rejects bad credentials with HTTP 200 + a JSON-RPC error (e.g. data 2100),
+            # which _raise_for_error files under 400. On Login that is a credential problem,
+            # so report it as unauthorized; network (0) / 5xx / 429 keep their own codes.
+            if e.status_code in (400, 422):
+                raise CoveError(401, e.message) from e
+            raise
         visa = data.get("visa")
         if not visa:
             raise CoveError(401, "Login succeeded but no visa was returned")
